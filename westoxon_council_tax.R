@@ -1,63 +1,71 @@
+# ------------------------------------------------------------
+# Task: Extract and Process Council Tax Data from a PDF
+# Purpose: Extract data tables from a PDF document, clean and format them,
+#          and then save the result to a CSV file.
+# Steps:
+#   1. Read and extract tables from the specified PDF file.
+#   2. Initialize field names for the final dataframe.
+#   3. Loop through each extracted table to clean and format data.
+#   4. Handle parish/town column naming and format band columns.
+#   5. Merge cleaned data into a final dataframe and save it as a CSV.
+# ------------------------------------------------------------
+
+# Load necessary libraries
 library(tabulizer)
 library(dplyr)
 
-# 指定 PDF 文件路径
+# Specify the path to the PDF file
 pdf_file <- "./wodc-council-tax-charges-2024-to-2025.pdf"
 
-# 提取所有页面的表格
+# Extract tables from all pages of the PDF file
 tables <- extract_tables(pdf_file, pages = "all", guess = TRUE)
 
-# 初始化字段名
+# Initialize column names for the final dataframe
 fieldnames <- c('name', 'Council', 'Band A (6/9)', 'Band B (7/9)',
                 'Band C (8/9)', 'Band D (9/9)', 'Band E (11/9)',
                 'Band F (13/9)', 'Band G (15/9)', 'Band H (18/9)')
 
-# 初始化空的数据框
+# Create an empty dataframe with the specified column names
 final_df <- data.frame(matrix(ncol = length(fieldnames), nrow = 0))
 colnames(final_df) <- fieldnames
 
-# 假设 'Council' 列的值为 'West Oxfordshire District Council'
+# Assume the 'Council' column value for all rows is 'West Oxfordshire District Council'
 council_name <- 'West Oxfordshire District Council'
 
-# 处理提取的表格
+# Loop through each extracted table to process and clean the data
 for (i in seq_along(tables)) {
   table <- tables[[i]]
-  # 将表格转换为数据框
+  # Convert the table into a dataframe
   df <- as.data.frame(table, stringsAsFactors = FALSE)
 
-  # 跳过空表格
+  # Skip if the table is empty
   if (nrow(df) == 0) {
     next
   }
 
-  # 将第一行设置为列名
+  # Set the first row as column names
   colnames(df) <- df[1, ]
-  df <- df[-1, ]  # 删除第一行
+  df <- df[-1, ]  # Remove the first row
 
-  # 去除列名和数据中的空格
+  # Remove extra spaces from column names and data
   colnames(df) <- trimws(colnames(df))
-  df <- df %>%
-    mutate(across(everything(), ~ trimws(.)))
+  df <- df %>% mutate(across(everything(), ~ trimws(.)))
 
-  # 重命名 'Parish/Town' 列为 'name'
+  # Rename the 'Parish/Town' column to 'name'
   if ('Parish/Town' %in% colnames(df)) {
-    df <- df %>%
-      rename(name = 'Parish/Town')
+    df <- df %>% rename(name = 'Parish/Town')
   } else if ('Parish' %in% colnames(df)) {
-    df <- df %>%
-      rename(name = 'Parish')
+    df <- df %>% rename(name = 'Parish')
   } else {
-    # 如果没有找到名称列，跳过此表格
+    # If no appropriate column is found, skip this table
     next
   }
 
-  # 添加 'Council' 列
+  # Add the 'Council' column
   df$Council <- council_name
 
-  # 重命名 Band 列，使其与指定的列名匹配
+  # Rename the band columns to match the specified fieldnames
   band_columns <- colnames(df)[grepl("^Band", colnames(df))]
-
-  # 创建一个映射，将原始列名映射到新的列名
   band_mapping <- c(
     'Band A' = 'Band A (6/9)',
     'Band B' = 'Band B (7/9)',
@@ -69,20 +77,18 @@ for (i in seq_along(tables)) {
     'Band H' = 'Band H (18/9)'
   )
 
-  # 根据映射重命名列
-  df <- df %>%
-    rename_at(vars(band_columns), ~ band_mapping[.])
+  # Apply the column renaming
+  df <- df %>% rename_at(vars(band_columns), ~ band_mapping[.])
 
-  # 选择并排列列，确保与指定的字段名一致
-  df <- df %>%
-    select(all_of(fieldnames))
+  # Select and arrange columns to match the specified fieldnames
+  df <- df %>% select(all_of(fieldnames))
 
-  # 将处理好的数据添加到最终的数据框
+  # Append the cleaned dataframe to the final dataframe
   final_df <- bind_rows(final_df, df)
 }
 
-# 保存为 CSV 文件
+# Save the final dataframe to a CSV file
 output_csv <- "./wodc_council_tax_data.csv"
 write.csv(final_df, output_csv, row.names = FALSE)
 
-cat("数据已成功保存到", output_csv, "\n")
+cat("Data successfully saved to", output_csv, "\n")
