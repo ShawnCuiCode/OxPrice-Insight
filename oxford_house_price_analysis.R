@@ -253,7 +253,7 @@ library(RSQLite)
 library(readxl)
 
 # Read the Excel file and select the sheet
-table_1a <- read_excel("./HPSSA.xls", sheet = "1a")
+table_1a <- read_excel("hpssa_data.xls", sheet = "1a")
 
 # Remove rows with NA values
 table_1a <- na.omit(table_1a)
@@ -564,20 +564,20 @@ process_council_tax_file <- function(file_path, district_name, conn) {
 
 # Define the list of files and their corresponding district names.
 # Data Sources:
-# - CherwellCouncilTax.csv, SouthOxfordshireCouncilTax.csv, ValeOfWhiteHorseCouncilTax.csv:
+# - cherwell_council_tax.csv, SouthOxfordshireCouncilTax.csv, ValeOfWhiteHorseCouncilTax.csv:
 #   These files were generated using specific Python scripts, which scrape or fetch data
 #   from the respective district's government websites (Cherwell, South Oxfordshire, and
 #   Vale of White Horse).
-# - WestoxonCouncilTax.csv: Created using an R script that processes the West Oxfordshire
+# - westoxon_council_tax.csv: Created using an R script that processes the West Oxfordshire
 #   council tax data, extracted from relevant sources or government datasets.
-# - OxfordCityCouncilTax.csv: This file is part of the original dataset available from the
+# - oxford_city_council_tax.csv: This file is part of the original dataset available from the
 #   government or a direct data download from the Oxford City Council's official resources.
 files_and_districts <- list(
-  list(file = "./CherwellCouncilTax.csv", district = "Cherwell"),
-  list(file = "./WestoxonCouncilTax.csv", district = "West Oxfordshire"),
-  list(file = "./SouthoxonCouncilTax.csv", district = "South Oxfordshire"),
-  list(file = "./OxfordCityCouncilTax.csv", district = "Oxford"),
-  list(file = "./ValeofWhiteHorseCouncilTax.csv", district = "Vale of White Horse")
+  list(file = "./cherwell_council_tax.csv", district = "Cherwell"),
+  list(file = "./westoxon_council_tax.csv", district = "West Oxfordshire"),
+  list(file = "./southoxon_council_tax.csv", district = "South Oxfordshire"),
+  list(file = "./oxford_city_council_tax.csv", district = "Oxford"),
+  list(file = "./vale_of_white_horse_council_tax.csv", district = "Vale of White Horse")
 )
 
 # Go through each file and process it

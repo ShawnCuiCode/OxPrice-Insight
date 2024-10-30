@@ -32,7 +32,7 @@ fieldnames = ['name', 'Band A (6/9)', 'Band B (7/9)',
               'Band G (15/9)', 'Band H (18/9)', 'Council']
 
 # Open the CSV file for writing
-with open('CherwellCouncilTax.csv', 'w', newline='', encoding='utf-8') as csvfile:
+with open('cherwell_council_tax.csv', 'w', newline='', encoding='utf-8') as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
 
