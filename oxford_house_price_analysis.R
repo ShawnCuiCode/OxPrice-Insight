@@ -18,18 +18,18 @@ conn <- dbConnect(RSQLite::SQLite(), "./oxfordshire_data.db")
 # Task 3
 # Function: calculate_avg_price_for_two_years
 # Purpose: Calculate the average house price for a given ward in a specific district over two years.
-# Input:
+# Inputs:
 #   - conn: Database connection object
-#   - district_name: The name of the district (e.g., 'City of Oxford', 'Cherwell')
-#   - ward_name: The name of the ward within the specified district
-#   - year_1: The first year to include in the average calculation (e.g., '2021')
-#   - year_2: The second year to include in the average calculation (e.g., '2022')
-# Output: A data frame containing the average house price for the specified ward over the two years
+#   - district_name: District to search within (e.g., 'City of Oxford', 'Cherwell')
+#   - ward_name: Ward within the district to analyze
+#   - year_1: The first year to include in the calculation (e.g., '2021')
+#   - year_2: The second year to include in the calculation (e.g., '2022')
+# Output: A data frame showing the average price for the specified ward over two years
 # ------------------------------------------------------------
 
 calculate_avg_price_for_two_years <- function(conn, district_name, ward_name, year_1, year_2) {
 
-  # SQL query to calculate the average house price for a ward in a specific district over two years
+  # SQL query to calculate the average house price over two years for a given ward
   avg_price_query <- sprintf("
     SELECT wards.name as ward_name,
            AVG(price) as avg_price
@@ -42,29 +42,20 @@ calculate_avg_price_for_two_years <- function(conn, district_name, ward_name, ye
     GROUP BY wards.name
   ", district_name, ward_name, year_1, year_2)
 
-  # Execute the query using the provided database connection
+  # Execute the query
   result <- dbGetQuery(conn, avg_price_query)
 
-  # Check if the result is empty or not and return an appropriate message if no data is found
+  # Check if the result is empty and return a message if no data is found
   if (nrow(result) == 0) {
     message <- paste("No data found for ward:", ward_name, "in district:", district_name)
     return(data.frame(ward_name = ward_name, avg_price = NA, message = message))
   } else {
-    return(result)  # Return the data frame with the calculated average price
+    return(result)  # Return the result with average price
   }
 }
 
-# ------------------------------------------------------------
 # Example usage:
-# Assume you have established a connection 'conn' to your SQLite database
-# Calculate the average house price for the ward 'Barton and Sandhills' in 'City of Oxford'
-# for the years 2021 and 2022
-# ------------------------------------------------------------
-
-# Example call to the function
 result <- calculate_avg_price_for_two_years(conn, 'Oxford', 'Barton and Sandhills', '2022', '2023')
-
-# Print the result to view the calculated average price
 print(result)
 
 
@@ -80,8 +71,6 @@ print(result)
 # ------------------------------------------------------------
 
 find_highest_price_ward <- function(conn, district_name, quarter_year) {
-
-  # Corrected SQL query to find the ward with the highest house price for a specific quarter in a district
   highest_price_query <- sprintf("
     SELECT wards.name as ward_name,
            MAX(price) as max_price
@@ -101,15 +90,13 @@ find_highest_price_ward <- function(conn, district_name, quarter_year) {
     )
   ", district_name, quarter_year, district_name, quarter_year)
 
-  # Execute the SQL query using the provided database connection
   result <- dbGetQuery(conn, highest_price_query)
 
-  # Check if the result is empty or not and return an appropriate message if no data is found
   if (nrow(result) == 0) {
     message <- paste("No data found for district:", district_name, "in quarter:", quarter_year)
     return(data.frame(ward_name = NA, max_price = NA, message = message))
   } else {
-    return(result)  # Return the data frame with the highest price and corresponding ward
+    return(result)
   }
 }
 
@@ -130,13 +117,11 @@ print(result)
 # ------------------------------------------------------------
 
 calculate_average_council_tax <- function(conn, town_name, district_name, bands) {
-
   # Check that exactly three bands are provided
   if (length(bands) != 3) {
     stop("Please provide exactly three bands.")
   }
 
-  # SQL query to find the average council tax for the specified town and district across the provided bands
   average_tax_query <- sprintf("
     SELECT parishes.name AS town_name,
            districts.name AS district_name,
@@ -150,15 +135,13 @@ calculate_average_council_tax <- function(conn, town_name, district_name, bands)
       AND districts.name = '%s'
   ", tolower(bands[1]), tolower(bands[2]), tolower(bands[3]), town_name, district_name)
 
-  # Execute the SQL query using the provided database connection
   result <- dbGetQuery(conn, average_tax_query)
 
-  # Check if the result is empty or not and return an appropriate message if no data is found
   if (nrow(result) == 0) {
     message <- paste("No data found for town:", town_name, "in district:", district_name)
     return(data.frame(town_name = NA, district_name = NA, average_council_tax = NA, message = message))
   } else {
-    return(result)  # Return the data frame with the calculated average council tax
+    return(result)
   }
 }
 
@@ -180,8 +163,6 @@ print(result)
 # ------------------------------------------------------------
 
 calculate_council_tax_difference <- function(conn, district_name, town1, town2, band) {
-
-  # Corrected SQL query to find the difference in council tax charges between two towns for a specific band in a district
   tax_difference_query <- sprintf("
     SELECT
       p1.name AS town1_name,
@@ -198,20 +179,18 @@ calculate_council_tax_difference <- function(conn, district_name, town1, town2, 
       AND p2.name = '%s'
   ", tolower(band), tolower(band), district_name, town1, town2)
 
-  # Execute the SQL query using the provided database connection
   result <- dbGetQuery(conn, tax_difference_query)
 
-  # Check if the result is empty or not and return an appropriate message if no data is found
   if (nrow(result) == 0) {
     message <- paste("No data found for the towns:", town1, "and", town2, "in district:", district_name)
     return(data.frame(town1_name = NA, town2_name = NA, district_name = NA, tax_difference = NA, message = message))
   } else {
-    return(result)  # Return the data frame with the calculated council tax difference
+    return(result)
   }
 }
 
 # Example usage:
-result <- calculate_council_tax_difference(conn, 'Cherwell', 'Barford', 'Bicester', 'a')
+result <- calculate_council_tax_difference(conn, 'Cherwell', 'Barford', 'Bicester', 'A')
 print(result)
 
 # ------------------------------------------------------------
@@ -226,8 +205,6 @@ print(result)
 # ------------------------------------------------------------
 
 find_lowest_council_tax_town <- function(conn, district_name, band) {
-
-  # Corrected SQL query to find the town with the lowest council tax charges for a specific band in a district
   lowest_tax_query <- sprintf("
     SELECT p.name as town_name,
            d.name as district_name,
@@ -241,15 +218,13 @@ find_lowest_council_tax_town <- function(conn, district_name, band) {
     LIMIT 1
   ", tolower(band), district_name, tolower(band), tolower(band))
 
-  # Execute the SQL query using the provided database connection
   result <- dbGetQuery(conn, lowest_tax_query)
 
-  # Check if the result is empty or not and return an appropriate message if no data is found
   if (nrow(result) == 0) {
     message <- paste("No data found for district:", district_name, "in band:", band)
     return(data.frame(town_name = NA, district_name = NA, tax_amount = NA, message = message))
   } else {
-    return(result)  # Return the data frame with the lowest tax amount and corresponding town
+    return(result)
   }
 }
 
@@ -277,66 +252,54 @@ library(readr)
 library(RSQLite)
 library(readxl)
 
-# Read Excel data
+# Read the Excel file and select the sheet
 table_1a <- read_excel("./HPSSA.xls", sheet = "1a")
 
-# Remove NA values
+# Remove rows with NA values
 table_1a <- na.omit(table_1a)
 
-# Check data structure
+# Display structure of the data
 str(table_1a)
 
-# Set the first row as column names
+# Set the first row as column names and remove it from the data
 colnames(table_1a) <- table_1a[1, ]
 table_1a <- table_1a[-1, ]
 
-# Remove unnecessary columns (Local authority code and Ward code)
+# Drop columns that are not needed
 table_1a <- table_1a[ , -c(1, 3)]
 
-# Select the 5 districts in Oxfordshire
+# Filter the data to only include specific districts in Oxfordshire
 districts <- c("Oxford", "Cherwell", "South Oxfordshire", "Vale of White Horse", "West Oxfordshire")
 oxfordshire_data <- table_1a[table_1a$`Local authority name` %in% districts, ]
 
-# Replace "Year ending " with an empty string in column names
+# Clean up column names by removing text and updating dates
 colnames(oxfordshire_data) <- gsub("Year ending ", "", colnames(oxfordshire_data))
 
-# Define a function to convert month and year to "YYYY-MM-DD" format
+# Function to convert a month and year into a "YYYY-MM-DD" format
 convert_to_date <- function(month_year) {
-  # Split the column name into month and year
   parts <- strsplit(month_year, " ")[[1]]
   month <- parts[1]
   year <- parts[2]
 
-  # Define the last day of each month abbreviation
-  last_day <- switch(month,
-                     "Mar" = "03-31",
-                     "Jun" = "06-30",
-                     "Sep" = "09-30",
-                     "Dec" = "12-31",
-                     NA)
-
-  # Return the formatted date "YYYY-MM-DD"
+  last_day <- switch(month, "Mar" = "03-31", "Jun" = "06-30", "Sep" = "09-30", "Dec" = "12-31", NA)
   return(paste(year, last_day, sep = "-"))
 }
 
-# Get all column names that need conversion (starting from 3, as the first two are area and ward names)
+# Apply date conversion to the appropriate columns
 date_columns <- colnames(oxfordshire_data)[3:ncol(oxfordshire_data)]
-
-# Iterate over the column names and apply the date conversion function
 new_date_columns <- sapply(date_columns, convert_to_date)
-
-# Replace the original column names with the new ones
 colnames(oxfordshire_data)[3:ncol(oxfordshire_data)] <- new_date_columns
 
-# Check the updated column names
+# Verify the column names after conversion
 print(colnames(oxfordshire_data))
 
-# Export the data to a CSV file
+# Export the cleaned data to a CSV file
 write.csv(oxfordshire_data, file = "./oxfordshire_data.csv", row.names = TRUE)
 
+# Establish a connection to the SQLite database
 conn <- dbConnect(RSQLite::SQLite(), "./oxfordshire_data.db")
 
-# This part creates the 'districts' table to store different districts
+# Create the districts table
 dbExecute(conn, "
 CREATE TABLE districts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -344,7 +307,7 @@ CREATE TABLE districts (
 );
 ")
 
-# This part sets up the 'wards' table where each ward will be linked to its districts
+# Create the wards table with a foreign key to the districts table
 dbExecute(conn, "
 CREATE TABLE wards (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -354,7 +317,7 @@ CREATE TABLE wards (
 );
 ")
 
-# Set up the 'house_prices' table to store the prices for each ward by date
+# Create the house_prices table with a foreign key to the wards table
 dbExecute(conn, "
 CREATE TABLE house_prices (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -365,70 +328,53 @@ CREATE TABLE house_prices (
 );
 ")
 
-# Get unique local authority names from oxfordshire_data
-unique_districts <- unique(oxfordshire_data$'District name')
-
-# Print them out just to see what we’re working with
+# Get the unique districts from the Oxfordshire data
+unique_districts <- unique(oxfordshire_data$`Local authority name`)
 print(unique_districts)
 
-# Insert each unique local authority into the districts table
+# Insert each district into the districts table if not already present
 for (authority in unique_districts) {
-  # Check if this authority is already in the table
   exists <- dbGetQuery(conn, paste("SELECT COUNT(*) FROM districts WHERE name = '", authority, "';"))
 
   if (exists[1, 1] == 0) {
-    # If it's not there, go ahead and insert it
     dbExecute(conn, paste0("INSERT INTO districts (name) VALUES ('", authority, "');"))
   }
 }
 
-# Query the districts table to make sure everything was inserted
+# Query the inserted districts
 districts <- dbGetQuery(conn, "SELECT * FROM districts;")
-
-# Print out the local authorities
 print(districts)
 
-# Now we want to match up each ward with its corresponding local authority
-ward_names <- oxfordshire_data$'Ward name'
-district_names <- oxfordshire_data$'Local authority name'
-
-# Use the local authority name to find the corresponding district_id
+# Match ward names with their respective district IDs
+ward_names <- oxfordshire_data$`Ward name`
+district_names <- oxfordshire_data$`Local authority name`
 district_ids <- districts$id[match(district_names, districts$name)]
 
-# Create a new data frame that combines district_id with ward names
+# Create and insert the ward data into the wards table
 ward_data <- data.frame(district_id = district_ids, name = ward_names)
-
-# Insert the ward data into the 'wards' table in the database
 dbWriteTable(conn, "wards", ward_data, append = TRUE, row.names = FALSE)
 
-# Query the 'wards' table to check the data
+# Query the inserted wards
 wards_data <- dbGetQuery(conn, "SELECT * FROM wards")
-
-# Print out the wards data to verify
 print(wards_data)
 
-# Get the number of rows in the oxfordshire_data dataframe
+# Get the number of rows in the data frame
 num_rows <- nrow(oxfordshire_data)
 print(num_rows)
 
-# Loop through each row in oxfordshire_data and insert price data into 'house_prices'
+# Loop through the data to insert house price information
 for (i in 1:num_rows) {
-  ward_name <- oxfordshire_data$'Ward name'[i]
-
-  # Escape any single quotes in the ward name (for SQL compatibility)
+  ward_name <- oxfordshire_data$`Ward name`[i]
   ward_name <- gsub("'", "''", ward_name)
 
-  # Find the ward_id by matching the ward name
   ward_id_query <- sprintf("SELECT id FROM wards WHERE name = '%s'", ward_name)
   ward_id <- dbGetQuery(conn, ward_id_query)$id
 
-  # Loop through each date and price (from the 3rd column onward) and insert them
   for (j in 3:ncol(oxfordshire_data)) {
     date <- colnames(oxfordshire_data)[j]
     price <- as.numeric(oxfordshire_data[i, j])
 
-    if (!is.na(price)) {  # Only insert data if the price is not NA
-      # Insert the date and price for this ward
+    if (!is.na(price)) {
       insert_query <- sprintf("INSERT INTO house_prices (ward_id, date, price) VALUES (%d, '%s', %f)",
                               ward_id, date, price)
       dbExecute(conn, insert_query)
@@ -436,9 +382,11 @@ for (i in 1:num_rows) {
   }
 }
 
-# Query the 'house_prices' table to confirm everything was inserted correctly
+# Query the house_prices table to confirm data insertion
 house_prices <- dbGetQuery(conn, "SELECT * FROM house_prices")
 print(house_prices)
+
+dbDisconnect(conn)
 
 
 # =============================================================================

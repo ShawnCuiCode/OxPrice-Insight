@@ -3,10 +3,10 @@ from bs4 import BeautifulSoup
 import csv
 import time
 
-# 定义目标年份（2024/2025）
-YEAR = '23'  # '23' 对应 2024/2025 年度
+# Define target year (2024/2025)
+YEAR = '23'  # '23' corresponds to 2024/2025
 
-# 定义税级列表和对应的分数
+# Define council tax bands and their corresponding fractions
 bands = [
     {'code': 'A', 'fraction': '6/9'},
     {'code': 'B', 'fraction': '7/9'},
@@ -18,27 +18,28 @@ bands = [
     {'code': 'H', 'fraction': '18/9'}
 ]
 
-# 定义字段名
+# Define column headers for the CSV file
 fieldnames = ['name', 'Council', 'Band A (6/9)', 'Band B (7/9)',
               'Band C (8/9)', 'Band D (9/9)', 'Band E (11/9)',
               'Band F (13/9)', 'Band G (15/9)', 'Band H (18/9)']
 
-# 创建会话对象
+# Create a session object
 session = requests.Session()
 
-# 获取教区列表的页面 URL
+# URL to get the list of parishes
 form_url = 'https://data.southoxon.gov.uk/ccm/support/Main.jsp?MODULE=Calculator'
 
-# 获取教区列表
+# Fetch the page containing parish list
 response = session.get(form_url)
 response.raise_for_status()
 
+# Parse the page content
 soup = BeautifulSoup(response.content, 'html.parser')
 
-# 找到教区下拉列表
+# Find the dropdown menu for selecting parishes
 parish_select = soup.find('select', {'name': 'PARISH'})
 
-# 提取教区代码和名称
+# Extract parish codes and names
 parish_options = parish_select.find_all('option')
 parish_list = []
 for option in parish_options:
@@ -46,25 +47,26 @@ for option in parish_options:
     name = option.text.strip()
     parish_list.append({'code': code, 'name': name})
 
-print(f"共找到 {len(parish_list)} 个教区。")
+print(f"Found {len(parish_list)} parishes.")
 
-# 打开 CSV 文件
+# Open a CSV file to write the data
 with open('southoxon_council_tax_2024_2025.csv', 'w', newline='', encoding='utf-8') as csvfile:
     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
     writer.writeheader()
 
-    # 遍历每个教区
+    # Loop through each parish
     for index, parish in enumerate(parish_list):
         parish_code = parish['code']
         parish_name = parish['name']
-        print(f"正在处理第 {index + 1}/{len(parish_list)} 个教区：{parish_name}")
+        print(f"Processing parish {index + 1}/{len(parish_list)}: {parish_name}")
 
+        # Create a record with default council name
         record = {'name': parish_name, 'Council': 'South Oxfordshire District Council'}
 
-        # 遍历每个税级
+        # Loop through each council tax band
         for band in bands:
             try:
-                # 构造表单数据
+                # Prepare the form data
                 payload = {
                     'MODULE': 'Calculation',
                     'YEAR': YEAR,
@@ -73,33 +75,33 @@ with open('southoxon_council_tax_2024_2025.csv', 'w', newline='', encoding='utf-
                     'Submit': 'Submit'
                 }
 
-                # 发送 POST 请求
+                # Send a POST request to fetch the band charges
                 result_response = session.post('https://data.southoxon.gov.uk/ccm/support/Main.jsp?MODULE=Calculation', data=payload)
                 result_response.raise_for_status()
 
-                # 解析结果页面
+                # Parse the result page
                 result_soup = BeautifulSoup(result_response.content, 'html.parser')
 
-                # 查找 Total 金额
+                # Locate the Total amount field
                 total_label_div = result_soup.find('div', class_='celldiv', string='Total')
                 if total_label_div:
                     amount_div = total_label_div.find_next_sibling('div', class_='celldiv')
                     total_amount = amount_div.text.strip()
-                    # 去除金额中的符号和逗号
+                    # Clean up the amount by removing symbols and commas
                     total_amount = total_amount.replace('£', '').replace(',', '').strip()
-                    # 添加到记录中
+                    # Add the amount to the record
                     field_name = f"Band {band['code']} ({band['fraction']})"
                     record[field_name] = total_amount
                 else:
-                    print(f"未找到 Total 信息，跳过 Band {band['code']}")
+                    print(f"No Total information found, skipping Band {band['code']}")
             except Exception as e:
-                print(f"处理 Band {band['code']} 时发生错误：{e}")
+                print(f"Error processing Band {band['code']}: {e}")
                 continue
 
-            # 为了礼貌，添加延迟
+            # Add a short delay between requests
             time.sleep(0.1)
 
-        # 将记录写入 CSV 文件
+        # Write the record to the CSV file
         writer.writerow(record)
 
-print("数据已成功保存到 southoxon_council_tax_2024_2025.csv 文件中。")
+print("Data successfully saved to southoxon_council_tax_2024_2025.csv.")
