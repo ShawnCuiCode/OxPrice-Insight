@@ -1,5 +1,5 @@
 # ------------------------------------------------------------
-# File: oxford_house_price_analysis.R
+# File: script.R
 # Author: Shawn Cui
 # Course: COMP6037 Foundations of Data Analytics
 # Assignment: Coursework 1 (House Prices and Council Tax Analysis)
@@ -10,6 +10,9 @@
 
 # Load necessary libraries
 library(DBI)
+library(readr)
+library(RSQLite)
+library(readxl)
 
 # Connect to db
 conn <- dbConnect(RSQLite::SQLite(), "./oxfordshire_data.db")
@@ -246,11 +249,6 @@ dbDisconnect(conn)
 #   - Step 3: Transform the dataset (handle missing values and column names)
 #   - Step 4: Prepare and store clean data in a SQL database for analysis
 # =============================================================================
-
-# Load necessary libraries
-library(readr)
-library(RSQLite)
-library(readxl)
 
 # Read the Excel file and select the sheet
 table_1a <- read_excel("hpssa_data.xls", sheet = "1a")
